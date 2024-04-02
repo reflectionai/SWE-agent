@@ -1,3 +1,4 @@
-anthropic
+anthropic[bedrock]
 config
 openai
+uv

@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: swe-eval-
+spec:
+  entrypoint: evaluate
+  templates:
+    - name: evaluate
+      steps:
+        - - name: get-instance-ids
+            template: get-instance-ids
+        - - name: run-evaluation
+            template: run-evaluation
+            arguments:
+              parameters:
+                - name: instance-id
+                  value: "{{item}}"
+            withItems: "{{steps.get-instance-ids.outputs.result}}"
+
+    - name: get-instance-ids
+      script:
+        image: python:3.9
+        command: [python]
+        source: |
+          from datasets import load_dataset
+          import json
+
+          split = 'dev'  # Change as needed
+          df = load_dataset("princeton-nlp/SWE-bench_Lite")[split].to_pandas()
+          instance_ids = df['instance_id'].tolist()
+          print(json.dumps(instance_ids))
+
+    - name: run-evaluation
+      inputs:
+        parameters:
+          - name: instance-id
+      container:
+        image: docker:19.03.12
+        command:
+          - sh
+          - -c
+          - |
+            docker run --rm -it sweagent/swe-eval:local python /evaluate_one.py --instance_id {{inputs.parameters.instance-id}} --split dev

@@ -20,6 +20,7 @@
           alejandra
           poetry
           python3Full
+          kubernetes
         ];
         PYTHONBREAKPOINT = "ipdb.set_trace";
         shellHook = ''
